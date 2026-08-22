@@ -41,6 +41,7 @@
       "electron/**/*",
       "renderer/index.html",
       "renderer/styles.css",
+      "renderer/runtime-enhancements.css",
       "renderer/runtime-enhancements.js",
       "renderer/dist/**/*",
       "templates/**/*",
@@ -54,42 +55,11 @@
       {"from":"resources/integrity-manifest.json","to":"integrity-manifest.json"}
     ],
     "directories": {"output":"release","buildResources":"build"},
-    "win": {
-      "icon":"build/icon.ico",
-      "artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}",
-      "target":["nsis"],
-      "verifyUpdateCodeSignature":true
-    },
-    "nsis": {
-      "oneClick":false,
-      "allowElevation":true,
-      "allowToChangeInstallationDirectory":true,
-      "createDesktopShortcut":true,
-      "createStartMenuShortcut":true,
-      "shortcutName":"RUSH Office Suite",
-      "runAfterFinish":true,
-      "deleteAppDataOnUninstall":false,
-      "perMachine":false,
-      "menuCategory":"RUSH"
-    },
-    "msi": {
-      "oneClick": false,
-      "perMachine": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    },
-    "linux": {
-      "category":"Office",
-      "target":["AppImage","deb"],
-      "artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}"
-    },
-    "mac": {
-      "category":"public.app-category.productivity",
-      "target":["dmg","zip"],
-      "artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}",
-      "hardenedRuntime":true,
-      "gatekeeperAssess":false
-    },
+    "win": {"icon":"build/icon.ico","artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}","target":["nsis"],"verifyUpdateCodeSignature":true},
+    "nsis": {"oneClick":false,"allowElevation":true,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true,"shortcutName":"RUSH Office Suite","runAfterFinish":true,"deleteAppDataOnUninstall":false,"perMachine":false,"menuCategory":"RUSH"},
+    "msi": {"oneClick":false,"perMachine":true,"createDesktopShortcut":true,"createStartMenuShortcut":true},
+    "linux": {"category":"Office","target":["AppImage","deb"],"artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}"},
+    "mac": {"category":"public.app-category.productivity","target":["dmg","zip"],"artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}","hardenedRuntime":true,"gatekeeperAssess":false},
     "fileAssociations": [
       {"ext":"pdf","name":"PDF Document","role":"Editor"},
       {"ext":"docx","name":"Word Document","role":"Editor"},
