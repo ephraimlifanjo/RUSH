@@ -14,9 +14,14 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: npm install
-      - run: python -m pip install -r python/requirements.txt
+      - run: python -m venv .venv
+      - run: .venv\Scripts\python.exe -m pip install -U pip
+        shell: pwsh
+      - run: .venv\Scripts\python.exe -m pip install -r python\requirements.txt
+        shell: pwsh
       - run: npm run check
-      - run: python python/self_test.py
+      - run: .venv\Scripts\python.exe python\self_test.py
+        shell: pwsh
       - run: npm run dist:win
         shell: pwsh
       - run: npm run dist:msi
@@ -36,10 +41,11 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y cmake build-essential libarchive-tools rpm
       - run: npm install
       - run: python3 -m venv .venv
+      - run: .venv/bin/python -m pip install -U pip
       - run: .venv/bin/python -m pip install -r python/requirements.txt
       - run: npm run check
       - run: .venv/bin/python python/self_test.py
-      - run: chmod +x BUILD_LINUX.sh scripts/*.sh && ./BUILD_LINUX.sh
+      - run: npm run dist:linux
       - uses: actions/upload-artifact@v4
         with: {name: rush-linux, path: desktop/release/*}
 
@@ -55,9 +61,10 @@ jobs:
       - run: brew install cmake || true
       - run: npm install
       - run: python3 -m venv .venv
+      - run: .venv/bin/python -m pip install -U pip
       - run: .venv/bin/python -m pip install -r python/requirements.txt
       - run: npm run check
       - run: .venv/bin/python python/self_test.py
-      - run: chmod +x BUILD_MACOS.sh scripts/*.sh && ./BUILD_MACOS.sh
+      - run: npm run dist:mac
       - uses: actions/upload-artifact@v4
         with: {name: rush-macos, path: desktop/release/*}
