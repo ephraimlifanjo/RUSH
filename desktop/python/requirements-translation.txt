@@ -1,0 +1,4 @@
+# Optional on-device translation engine.
+# Keep this separate from the core installer so RUSH stays lightweight.
+# Users install only the language packs they need.
+argostranslate>=1.9.6,<2
