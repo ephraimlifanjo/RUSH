@@ -1,3 +1,6 @@
+param(
+  [switch]$WithTranslation
+)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -12,6 +15,11 @@ if (-not (Test-Path ".venv")) { if ($py.Name -match '^py') { py -3 -m venv .venv
 $venvPython = Join-Path $root ".venv\Scripts\python.exe"
 & $venvPython -m pip install --upgrade pip
 & $venvPython -m pip install -r ".\python\requirements.txt"
+if ($WithTranslation) {
+  Write-Host "Installing optional on-device translation runtime..." -ForegroundColor Yellow
+  & $venvPython -m pip install -r ".\python\requirements-translation.txt"
+  Write-Host "Translation runtime installed. Language model packs are downloaded separately only when needed." -ForegroundColor Green
+}
 Write-Host "Checking optional OCR runtime..." -ForegroundColor Yellow
 $tess = Get-Command tesseract -ErrorAction SilentlyContinue
 if (-not $tess -and (Test-Path "C:\Program Files\Tesseract-OCR\tesseract.exe")) { $tess = "C:\Program Files\Tesseract-OCR\tesseract.exe" }
