@@ -19,6 +19,16 @@ contextBridge.exposeInMainWorld('rush', {
   indexLibrary: (paths, options) => ipcRenderer.invoke('library:index', paths, options),
   searchLibrary: (query, limit) => ipcRenderer.invoke('library:search', query, limit),
   libraryStats: () => ipcRenderer.invoke('library:stats'),
+  getLicense: () => ipcRenderer.invoke('pro:license-get'),
+  importLicense: () => ipcRenderer.invoke('pro:license-import'),
+  clearLicense: () => ipcRenderer.invoke('pro:license-clear'),
+  snapshotVersion: (filePath, label) => ipcRenderer.invoke('history:snapshot', filePath, label),
+  listVersions: filePath => ipcRenderer.invoke('history:list', filePath),
+  restoreVersion: (id, target) => ipcRenderer.invoke('history:restore', id, target),
+  importFromInternet: url => ipcRenderer.invoke('internet:import', url),
+  importFont: () => ipcRenderer.invoke('font:import'),
+  createSecurePackage: (input, output, password, expiresAt) => ipcRenderer.invoke('secure:create-package', input, output, password, expiresAt),
+  integrityStatus: () => ipcRenderer.invoke('integrity:status'),
   onOpenFile: callback => {
     const listener = (_event, filePath) => callback(filePath);
     ipcRenderer.on('app:open-file', listener);
