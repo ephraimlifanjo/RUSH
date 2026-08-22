@@ -1,0 +1,63 @@
+name: Package Desktop
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults: {run: {working-directory: desktop}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: npm install
+      - run: python -m pip install -r python/requirements.txt
+      - run: npm run check
+      - run: python python/self_test.py
+      - run: npm run dist:win
+        shell: pwsh
+      - run: npm run dist:msi
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with: {name: rush-windows, path: desktop/release/*}
+
+  linux:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: desktop}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: sudo apt-get update && sudo apt-get install -y cmake build-essential libarchive-tools rpm
+      - run: npm install
+      - run: python3 -m venv .venv
+      - run: .venv/bin/python -m pip install -r python/requirements.txt
+      - run: npm run check
+      - run: .venv/bin/python python/self_test.py
+      - run: chmod +x BUILD_LINUX.sh scripts/*.sh && ./BUILD_LINUX.sh
+      - uses: actions/upload-artifact@v4
+        with: {name: rush-linux, path: desktop/release/*}
+
+  macos:
+    runs-on: macos-latest
+    defaults: {run: {working-directory: desktop}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: brew install cmake || true
+      - run: npm install
+      - run: python3 -m venv .venv
+      - run: .venv/bin/python -m pip install -r python/requirements.txt
+      - run: npm run check
+      - run: .venv/bin/python python/self_test.py
+      - run: chmod +x BUILD_MACOS.sh scripts/*.sh && ./BUILD_MACOS.sh
+      - uses: actions/upload-artifact@v4
+        with: {name: rush-macos, path: desktop/release/*}
