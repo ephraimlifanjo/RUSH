@@ -15,12 +15,15 @@
     "selftest:py": "python python/self_test.py",
     "build:python": "powershell -ExecutionPolicy Bypass -File scripts/build-python.ps1",
     "build:native": "powershell -ExecutionPolicy Bypass -File scripts/build-native.ps1",
-    "dist:win": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win nsis --x64",
-    "dist:msi": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win msi --x64",
-    "dist:msix": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win msix --x64",
-    "dist:portable": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win portable --x64",
-    "dist:linux": "npm run check && npm run build:ui && electron-builder --linux AppImage deb --x64",
-    "dist:mac": "npm run check && npm run build:ui && electron-builder --mac dmg zip --x64 arm64"
+    "build:python:unix": "bash scripts/build-python.sh",
+    "build:native:unix": "bash scripts/build-native.sh",
+    "integrity": "node scripts/generate-integrity.mjs",
+    "dist:win": "npm run check && npm run build:ui && npm run build:python && npm run build:native && npm run integrity && electron-builder --win nsis --x64",
+    "dist:msi": "npm run check && npm run build:ui && npm run build:python && npm run build:native && npm run integrity && electron-builder --win msi --x64",
+    "dist:msix": "npm run check && npm run build:ui && npm run build:python && npm run build:native && npm run integrity && electron-builder --win msix --x64",
+    "dist:portable": "npm run check && npm run build:ui && npm run build:python && npm run build:native && npm run integrity && electron-builder --win portable --x64",
+    "dist:linux": "npm run check && npm run build:ui && npm run build:python:unix && npm run build:native:unix && npm run integrity && electron-builder --linux AppImage deb --x64",
+    "dist:mac": "npm run check && npm run build:ui && npm run build:python:unix && npm run build:native:unix && npm run integrity && electron-builder --mac dmg zip --x64 arm64"
   },
   "dependencies": {
     "pdfjs-dist": "^5.4.149",
@@ -43,6 +46,8 @@
       "renderer/styles.css",
       "renderer/runtime-enhancements.css",
       "renderer/runtime-enhancements.js",
+      "renderer/runtime-pro-tools.css",
+      "renderer/runtime-pro-tools.js",
       "renderer/dist/**/*",
       "templates/**/*",
       "package.json"
