@@ -1,0 +1,6 @@
+RUSH OFFICE SUITE — PROPRIETARY SOFTWARE
+Copyright (c) 2026 Nova Studio Plateformes. All rights reserved.
+
+The source code in this repository is provided for development and evaluation by the project owner and authorized contributors. No right is granted to redistribute, resell, sublicense, publish modified commercial builds, or use the RUSH name, branding, icons, or product identity without written permission from Nova Studio Plateformes.
+
+Third-party components remain subject to their respective licenses. See desktop/THIRD_PARTY_NOTICES.md.
