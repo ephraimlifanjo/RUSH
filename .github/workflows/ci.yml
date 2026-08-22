@@ -1,0 +1,47 @@
+name: RUSH CI
+
+on:
+  push:
+    branches: [main, "release/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  desktop-validation:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install JavaScript dependencies
+        run: npm install
+      - name: Install Python engine dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r python/requirements.txt
+      - name: Structural validation
+        run: npm run check
+      - name: Python engine self-test
+        run: python python/self_test.py
+      - name: Build renderer
+        run: npm run build:ui
+
+  marketing-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate static site files
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f app.js
+          test -f vercel.json
+          grep -q "RUSH Office Suite" index.html
+          grep -q "d32323" styles.css
