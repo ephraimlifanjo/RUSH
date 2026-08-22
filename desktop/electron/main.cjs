@@ -35,7 +35,7 @@ function checkedLocalFile(filePath, allowed = null, maxBytes = 300 * 1024 * 1024
 function readJson(file, fallback) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; } }
 function writeJson(file, value) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(value, null, 2)); }
 function settingsFile() { return path.join(app.getPath('userData'), 'settings.json'); }
-function settingsRead() { return readJson(settingsFile(), { theme:'light', sidebarCollapsed:false, ecoMode:true, ocrLanguages:'eng+fra', recent:[] }); }
+function settingsRead() { return readJson(settingsFile(), { theme:'rush', locale:'en', sidebarCollapsed:false, ecoMode:true, ocrLanguages:'eng+fra', recent:[] }); }
 function settingsPatch(patch) { const next = { ...settingsRead(), ...(patch || {}) }; writeJson(settingsFile(), next); return next; }
 
 function resolveEngine() {
@@ -44,7 +44,7 @@ function resolveEngine() {
     const exe = path.join(process.resourcesPath, 'python', name);
     if (fs.existsSync(exe)) return { cmd: exe, args: [] };
   }
-  const script = path.join(__dirname, '..', 'python', 'engine.py');
+  const script = path.join(__dirname, '..', 'python', 'engine_v2.py');
   const candidates = [process.env.RUSH_PYTHON_EXE, process.platform === 'win32' ? path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe') : path.join(__dirname, '..', '.venv', 'bin', 'python'), process.platform === 'win32' ? 'python' : 'python3'].filter(Boolean);
   for (const cmd of candidates) { if (cmd.includes(path.sep) && !fs.existsSync(cmd)) continue; return { cmd, args: [script] }; }
   throw new Error('RUSH document engine not found. Run the setup script first.');
