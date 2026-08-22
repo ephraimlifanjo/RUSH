@@ -1,11 +1,11 @@
 {
   "name": "rush-office-suite",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "RUSH Office Suite - privacy-first PDF and document editing by Nova Studio Plateformes.",
   "author": "Nova Studio Plateformes",
   "license": "UNLICENSED",
   "private": true,
-  "main": "electron/main.cjs",
+  "main": "electron/bootstrap.cjs",
   "type": "commonjs",
   "scripts": {
     "build:ui": "node scripts/build-ui.mjs",
@@ -17,6 +17,7 @@
     "build:native": "powershell -ExecutionPolicy Bypass -File scripts/build-native.ps1",
     "dist:win": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win nsis --x64",
     "dist:msi": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win msi --x64",
+    "dist:msix": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win msix --x64",
     "dist:portable": "npm run check && npm run build:ui && npm run build:python && npm run build:native && electron-builder --win portable --x64",
     "dist:linux": "npm run check && npm run build:ui && electron-builder --linux AppImage deb --x64",
     "dist:mac": "npm run check && npm run build:ui && electron-builder --mac dmg zip --x64 arm64"
@@ -36,17 +37,59 @@
     "productName": "RUSH Office Suite",
     "asar": true,
     "compression": "maximum",
-    "files": ["electron/**/*", "renderer/index.html", "renderer/styles.css", "renderer/dist/**/*", "templates/**/*", "package.json"],
+    "files": [
+      "electron/**/*",
+      "renderer/index.html",
+      "renderer/styles.css",
+      "renderer/runtime-enhancements.js",
+      "renderer/dist/**/*",
+      "templates/**/*",
+      "package.json"
+    ],
     "extraResources": [
       {"from":"resources/python","to":"python","filter":["**/*"]},
       {"from":"resources/native","to":"native","filter":["**/*"]},
-      {"from":"resources/ocr","to":"ocr","filter":["**/*"]}
+      {"from":"resources/ocr","to":"ocr","filter":["**/*"]},
+      {"from":"resources/license-public-key.pem","to":"license-public-key.pem"},
+      {"from":"resources/integrity-manifest.json","to":"integrity-manifest.json"}
     ],
     "directories": {"output":"release","buildResources":"build"},
-    "win": {"icon":"build/icon.ico","artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}","target":["nsis"]},
-    "nsis": {"oneClick":false,"allowElevation":true,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true,"shortcutName":"RUSH Office Suite","runAfterFinish":true,"deleteAppDataOnUninstall":false,"perMachine":false,"menuCategory":"RUSH"},
-    "linux": {"category":"Office","target":["AppImage","deb"],"artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}"},
-    "mac": {"category":"public.app-category.productivity","target":["dmg","zip"],"artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}"},
+    "win": {
+      "icon":"build/icon.ico",
+      "artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}",
+      "target":["nsis"],
+      "verifyUpdateCodeSignature":true
+    },
+    "nsis": {
+      "oneClick":false,
+      "allowElevation":true,
+      "allowToChangeInstallationDirectory":true,
+      "createDesktopShortcut":true,
+      "createStartMenuShortcut":true,
+      "shortcutName":"RUSH Office Suite",
+      "runAfterFinish":true,
+      "deleteAppDataOnUninstall":false,
+      "perMachine":false,
+      "menuCategory":"RUSH"
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "category":"Office",
+      "target":["AppImage","deb"],
+      "artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "category":"public.app-category.productivity",
+      "target":["dmg","zip"],
+      "artifactName":"RUSH-Office-Suite-${version}-${arch}.${ext}",
+      "hardenedRuntime":true,
+      "gatekeeperAssess":false
+    },
     "fileAssociations": [
       {"ext":"pdf","name":"PDF Document","role":"Editor"},
       {"ext":"docx","name":"Word Document","role":"Editor"},
