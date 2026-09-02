@@ -15,7 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Image as RLIma
 
 def _data_image(src):
  if not isinstance(src,str) or not src.startswith('data:image/') or ',' not in src:return None
- head,data=src.split(',',1)
+ _head,data=src.split(',',1)
  try:return base64.b64decode(data)
  except Exception:return None
 
@@ -103,22 +103,37 @@ def open_docx_rich(src):
   parts.append('<table>'+''.join(rows)+'</table>')
  engine.out(html=''.join(parts),format='.docx')
 
-def _paragraph_html(node):return ''.join(str(x) for x in node.contents)
+def _paragraph_without_images(node):
+ copy=BeautifulSoup(str(node),'html.parser').find()
+ if not copy:return ''
+ for image in copy.find_all('img'):image.decompose()
+ return ''.join(str(x) for x in copy.contents)
+
+def _append_pdf_image(story,node):
+ blob=_data_image(node.get('src'))
+ if not blob:return
+ try:
+  with Image.open(io.BytesIO(blob)) as im:
+   width_px,height_px=im.size
+  ratio=height_px/max(1,width_px);w=6.5*inch*_width_percent(node)/100
+  story.append(RLImage(io.BytesIO(blob),width=w,height=max(1,w*ratio)));story.append(Spacer(1,8))
+ except Exception:return
+
 def save_pdf_rich(source,dest):
  soup=BeautifulSoup(source,'html.parser');styles=getSampleStyleSheet();story=[]
  for n in _blocks(soup):
-  if n.name=='img':
-   blob=_data_image(n.get('src'))
-   if blob:
-    im=Image.open(io.BytesIO(blob));ratio=im.height/max(1,im.width);w=6.5*inch*_width_percent(n)/100;story.append(RLImage(io.BytesIO(blob),width=w,height=w*ratio));story.append(Spacer(1,8))
+  if n.name=='img':_append_pdf_image(story,n)
   elif n.name=='table':
    data=[[c.get_text(' ',strip=True) for c in r.find_all(['td','th'],recursive=False)] for r in n.find_all('tr')]
    if data:
-    cols=max(len(r) for r in data);data=[r+['']*(cols-len(r)) for r in data];t=Table(data,repeatRows=1);t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),.5,colors.grey),('PADDING',(0,0),(-1,-1),5)]));story.extend([t,Spacer(1,8)])
+    cols=max(len(r) for r in data);data=[r+['']*(cols-len(r)) for r in data];t=Table(data,repeatRows=1);t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),.5,colors.grey),('LEFTPADDING',(0,0),(-1,-1),5),('RIGHTPADDING',(0,0),(-1,-1),5),('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5)]));story.extend([t,Spacer(1,8)])
   elif n.name in ('ul','ol'):
    for li in n.find_all('li',recursive=False):story.append(Paragraph(('• ' if n.name=='ul' else '')+html_lib.escape(li.get_text(' ',strip=True)),styles['BodyText']))
   else:
-   sty=styles['Title'] if n.name=='h1' else styles['Heading1'] if n.name=='h2' else styles['Heading2'] if n.name=='h3' else styles['BodyText'];story.append(Paragraph(_paragraph_html(n) or '&nbsp;',sty));story.append(Spacer(1,4))
+   sty=styles['Title'] if n.name=='h1' else styles['Heading1'] if n.name=='h2' else styles['Heading2'] if n.name=='h3' else styles['BodyText']
+   clean=_paragraph_without_images(n)
+   if clean.strip():story.append(Paragraph(clean,sty));story.append(Spacer(1,4))
+   for image in n.find_all('img'):_append_pdf_image(story,image)
  Path(dest).parent.mkdir(parents=True,exist_ok=True);SimpleDocTemplate(dest,pagesize=A4,rightMargin=54,leftMargin=54,topMargin=54,bottomMargin=54).build(story or [Paragraph(' ',styles['BodyText'])])
 
 def op_doc_open(p):
