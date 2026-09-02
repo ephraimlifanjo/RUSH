@@ -2,42 +2,93 @@ name: Package Desktop
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/package-desktop.yml"
 
 jobs:
   windows:
     runs-on: windows-latest
-    defaults: {run: {working-directory: desktop}}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    defaults:
+      run:
+        working-directory: desktop
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: 22}
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - run: npm install
-      - run: python -m venv .venv
-      - run: .venv\Scripts\python.exe -m pip install -U pip
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install JavaScript dependencies
+        run: npm install
+
+      - name: Create Python environment
         shell: pwsh
-      - run: .venv\Scripts\python.exe -m pip install -r python\requirements.txt
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python.exe -m pip install --upgrade pip
+          .venv\Scripts\python.exe -m pip install -r python\requirements.txt
+
+      - name: Validate Office Suite
+        run: npm run check
+
+      - name: Test PDF and document engine
         shell: pwsh
-      - run: npm run check
-      - run: .venv\Scripts\python.exe python\self_test.py
+        run: .venv\Scripts\python.exe python\self_test.py
+
+      - name: Build Windows EXE and MSI
         shell: pwsh
-      - run: npm run dist:win
+        run: npm run dist:windows:ci
+
+      - name: Verify Windows installers
         shell: pwsh
-      - run: npm run dist:msi
-        shell: pwsh
-      - uses: actions/upload-artifact@v4
-        with: {name: rush-windows, path: desktop/release/*}
+        run: |
+          $exe = Get-ChildItem release -File -Filter "RUSH-Office-Suite-*.exe"
+          $msi = Get-ChildItem release -File -Filter "RUSH-Office-Suite-*.msi"
+          if (-not $exe) { throw "NSIS installer EXE was not produced." }
+          if (-not $msi) { throw "MSI installer was not produced." }
+          Write-Host "EXE installers:"
+          $exe | Select-Object Name,Length | Format-Table
+          Write-Host "MSI installers:"
+          $msi | Select-Object Name,Length | Format-Table
+
+      - name: Upload Windows installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: rush-office-windows
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            desktop/release/RUSH-Office-Suite-*.exe
+            desktop/release/RUSH-Office-Suite-*.msi
+            desktop/release/*.blockmap
+            desktop/release/latest*.yml
 
   linux:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    defaults: {run: {working-directory: desktop}}
+    defaults:
+      run:
+        working-directory: desktop
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 22}
+        with:
+          node-version: 22
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: "3.12"
       - run: sudo apt-get update && sudo apt-get install -y cmake build-essential libarchive-tools rpm
       - run: npm install
       - run: python3 -m venv .venv
@@ -47,17 +98,24 @@ jobs:
       - run: .venv/bin/python python/self_test.py
       - run: npm run dist:linux
       - uses: actions/upload-artifact@v4
-        with: {name: rush-linux, path: desktop/release/*}
+        with:
+          name: rush-office-linux
+          path: desktop/release/*
 
   macos:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
-    defaults: {run: {working-directory: desktop}}
+    defaults:
+      run:
+        working-directory: desktop
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 22}
+        with:
+          node-version: 22
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: "3.12"
       - run: brew install cmake || true
       - run: npm install
       - run: python3 -m venv .venv
@@ -67,4 +125,6 @@ jobs:
       - run: .venv/bin/python python/self_test.py
       - run: npm run dist:mac
       - uses: actions/upload-artifact@v4
-        with: {name: rush-macos, path: desktop/release/*}
+        with:
+          name: rush-office-macos
+          path: desktop/release/*
