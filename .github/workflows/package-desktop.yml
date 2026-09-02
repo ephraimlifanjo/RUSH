@@ -7,10 +7,8 @@ on:
     paths:
       - "desktop/**"
       - ".github/workflows/package-desktop.yml"
-
 permissions:
   contents: write
-
 jobs:
   windows:
     runs-on: windows-latest
@@ -22,103 +20,82 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Node
         uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
+        with: {node-version: 22}
       - name: Set up Python
         uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
+        with: {python-version: "3.12"}
       - name: Install JavaScript dependencies
         run: npm install
-
       - name: Create Python environment
         shell: pwsh
         run: |
           python -m venv .venv
           .venv\Scripts\python.exe -m pip install --upgrade pip
           .venv\Scripts\python.exe -m pip install -r python\requirements.txt
-
       - name: Validate Office Suite
         run: npm run check
-
       - name: Test PDF and document engine
         shell: pwsh
         run: .venv\Scripts\python.exe python\self_test.py
-
       - name: Build Windows EXE and MSI
         shell: pwsh
         run: npm run dist:windows:ci
-
       - name: Verify Windows installers
         shell: pwsh
         run: |
-          $exe = Get-ChildItem release -File -Filter "RUSH-Office-Suite-*.exe"
-          $msi = Get-ChildItem release -File -Filter "RUSH-Office-Suite-*.msi"
-          if (-not $exe) { throw "NSIS installer EXE was not produced." }
-          if (-not $msi) { throw "MSI installer was not produced." }
-          Write-Host "EXE installers:"
+          $exe = Get-ChildItem release -File -Filter "RUSH-Office-Suite-2.1.2-*.exe"
+          $msi = Get-ChildItem release -File -Filter "RUSH-Office-Suite-2.1.2-*.msi"
+          if (-not $exe) { throw "RUSH 2.1.2 EXE was not produced." }
+          if (-not $msi) { throw "RUSH 2.1.2 MSI was not produced." }
           $exe | Select-Object Name,Length | Format-Table
-          Write-Host "MSI installers:"
           $msi | Select-Object Name,Length | Format-Table
-
       - name: Upload Windows installers
         uses: actions/upload-artifact@v4
         with:
-          name: rush-office-windows
+          name: rush-office-windows-2.1.2
           if-no-files-found: error
           retention-days: 30
           path: |
-            desktop/release/RUSH-Office-Suite-*.exe
-            desktop/release/RUSH-Office-Suite-*.msi
-            desktop/release/*.blockmap
-            desktop/release/latest*.yml
-
+            desktop/release/RUSH-Office-Suite-2.1.2-*.exe
+            desktop/release/RUSH-Office-Suite-2.1.2-*.msi
       - name: Publish GitHub Release
         shell: pwsh
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "v2.1.1"
-          $title = "RUSH Office Suite 2.1.1"
+          $tag = "v2.1.2"
+          $title = "RUSH Office Suite 2.1.2"
           $notes = @"
-          RUSH Office Suite 2.1.1 for Windows x64.
+          RUSH Office Suite 2.1.2 corrective release for Windows x64.
 
-          Includes:
-          - PDF Studio
-          - DOCX/ODT/RTF/TXT document editor
-          - PDF merge, split, rotate, extract, protect, search and editing workflows
-          - Local SQLite document library
-          - Windows NSIS EXE installer
-          - Windows MSI installer
+          Fixes:
+          - typing/caret no longer resets or drops characters
+          - Save reads the live document DOM, including the last typed character
+          - Inserted images can be selected, resized, aligned and removed
+          - Images are embedded in DOCX and restored when reopening DOCX
+          - Document-to-PDF export supports embedded images
+          - PDF text/annotation/signature edits now have a real Save Edited PDF workflow
+          - PDF, Document and Settings ribbon tabs are interactive
+          - Split and PDF-to-images use folder outputs correctly
 
-          Built and verified automatically from the main branch.
+          Built and tested automatically from main.
           "@
           gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title $title --notes $notes
-          }
-          gh release upload $tag "desktop/release/RUSH-Office-Suite-2.1.1-x64.exe" "desktop/release/RUSH-Office-Suite-2.1.1-x64.msi" --repo $env:GITHUB_REPOSITORY --clobber
-
+          if ($LASTEXITCODE -ne 0) { gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title $title --notes $notes }
+          gh release upload $tag "desktop/release/RUSH-Office-Suite-2.1.2-x64.exe" "desktop/release/RUSH-Office-Suite-2.1.2-x64.msi" --repo $env:GITHUB_REPOSITORY --clobber
   linux:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: desktop
+    defaults: {run: {working-directory: desktop}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+        with: {node-version: 22}
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+        with: {python-version: "3.12"}
       - run: sudo apt-get update && sudo apt-get install -y cmake build-essential libarchive-tools rpm
       - run: npm install
       - run: python3 -m venv .venv
@@ -127,25 +104,16 @@ jobs:
       - run: npm run check
       - run: .venv/bin/python python/self_test.py
       - run: npm run dist:linux
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rush-office-linux
-          path: desktop/release/*
-
   macos:
     if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: desktop
+    defaults: {run: {working-directory: desktop}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+        with: {node-version: 22}
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+        with: {python-version: "3.12"}
       - run: brew install cmake || true
       - run: npm install
       - run: python3 -m venv .venv
@@ -154,7 +122,3 @@ jobs:
       - run: npm run check
       - run: .venv/bin/python python/self_test.py
       - run: npm run dist:mac
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rush-office-macos
-          path: desktop/release/*

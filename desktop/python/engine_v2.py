@@ -1,6 +1,7 @@
 import sys
 import engine
 import advanced
+import editor_fixes
 
 
 def op_capabilities_v2(p):
@@ -11,6 +12,8 @@ def op_capabilities_v2(p):
         'odt': engine.OpenDocumentText is not None,
         'rtf': True,
         'txt': True,
+        'documentImages': True,
+        'richPdfExport': True,
         'legacyDocConverter': bool(engine.find_converter()),
         'ocr': engine.tess_ready(),
         'sqliteFts': True,
@@ -20,6 +23,8 @@ def op_capabilities_v2(p):
     engine.out(capabilities=caps)
 
 
+engine.OPS['doc_open'] = editor_fixes.op_doc_open
+engine.OPS['doc_save'] = editor_fixes.op_doc_save
 engine.OPS['sign_pdf'] = lambda p: advanced.op_sign_pdf(p, engine.out)
 engine.OPS['translate_document'] = lambda p: advanced.op_translate_document(p, engine.out)
 engine.OPS['capabilities'] = op_capabilities_v2
