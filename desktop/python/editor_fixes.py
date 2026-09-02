@@ -6,12 +6,14 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.shared import Inches
-from PIL import Image
+from PIL import Image,ImageFile
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Image as RLImage,Table,TableStyle
+
+ImageFile.LOAD_TRUNCATED_IMAGES=True
 
 def _data_image(src):
  if not isinstance(src,str) or not src.startswith('data:image/') or ',' not in src:return None
@@ -109,14 +111,24 @@ def _paragraph_without_images(node):
  for image in copy.find_all('img'):image.decompose()
  return ''.join(str(x) for x in copy.contents)
 
+def _normalized_png(blob):
+ source=io.BytesIO(blob)
+ with Image.open(source) as im:
+  im.load();width_px,height_px=im.size
+  normalized=io.BytesIO()
+  if im.mode not in ('RGB','RGBA'):im=im.convert('RGBA' if 'A' in im.getbands() else 'RGB')
+  im.save(normalized,format='PNG',optimize=False)
+  normalized.seek(0)
+ return normalized,width_px,height_px
+
 def _append_pdf_image(story,node):
  blob=_data_image(node.get('src'))
  if not blob:return
  try:
-  with Image.open(io.BytesIO(blob)) as im:
-   width_px,height_px=im.size
+  normalized,width_px,height_px=_normalized_png(blob)
   ratio=height_px/max(1,width_px);w=6.5*inch*_width_percent(node)/100
-  story.append(RLImage(io.BytesIO(blob),width=w,height=max(1,w*ratio)));story.append(Spacer(1,8))
+  img=RLImage(normalized,width=w,height=max(1,w*ratio));img._rush_buffer=normalized
+  story.append(img);story.append(Spacer(1,8))
  except Exception:return
 
 def save_pdf_rich(source,dest):
