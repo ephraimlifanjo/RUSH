@@ -2,13 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 const root=path.resolve(import.meta.dirname,'..');
-const required=['package.json','.env.example','electron/main.cjs','electron/bootstrap.cjs','electron/feature-bridge.cjs','electron/preload.cjs','renderer/index.html','renderer/styles.css','renderer/runtime-enhancements.js','renderer/runtime-enhancements.css','renderer/runtime-pro-tools.js','renderer/runtime-pro-tools.css','renderer/src/main.jsx','renderer/src/themes.js','renderer/src/i18n.js','renderer/src/licensing.js','scripts/build-ui.mjs','scripts/generate-integrity.mjs','scripts/create-license.mjs','python/engine.py','python/engine_v2.py','python/advanced.py','python/self_test.py','python/requirements.txt','python/requirements-translation.txt','native/CMakeLists.txt','native/rush_native_core.cpp','scripts/setup-windows.ps1','scripts/build-python.ps1','scripts/build-native.ps1','BUILD_WINDOWS.ps1','BUILD_LINUX.sh','BUILD_MACOS.sh','README.md','THIRD_PARTY_NOTICES.md'];
+const required=['package.json','.env.example','electron/main.cjs','electron/bootstrap.cjs','electron/feature-bridge.cjs','electron/preload.cjs','renderer/index.html','renderer/styles.css','renderer/runtime-enhancements.js','renderer/runtime-enhancements.css','renderer/runtime-pro-tools.js','renderer/runtime-pro-tools.css','renderer/src/main.jsx','renderer/src/themes.js','renderer/src/i18n.js','renderer/src/licensing.js','scripts/build-ui.mjs','scripts/generate-integrity.mjs','scripts/create-license.mjs','scripts/generate-icon.py','python/engine.py','python/engine_v2.py','python/advanced.py','python/self_test.py','python/requirements.txt','python/requirements-translation.txt','native/CMakeLists.txt','native/rush_native_core.cpp','scripts/setup-windows.ps1','scripts/build-python.ps1','scripts/build-native.ps1','BUILD_WINDOWS.ps1','BUILD_LINUX.sh','BUILD_MACOS.sh','README.md','THIRD_PARTY_NOTICES.md'];
 const errors=[];
 for(const file of required)if(!fs.existsSync(path.join(root,file)))errors.push(`Missing ${file}`);
 let pkg={};try{pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'))}catch{errors.push('package.json is invalid JSON')}
 if(pkg.main!=='electron/bootstrap.cjs')errors.push('Package main must use secure bootstrap.cjs');
 for(const x of ['pdf','docx','odt','rtf','txt','doc'])if(!pkg.build?.fileAssociations?.some(v=>v.ext===x))errors.push(`Missing ${x} file association`);
-for(const script of ['dist:win','dist:msi','dist:msix','dist:linux','dist:mac'])if(!pkg.scripts?.[script])errors.push(`Missing package script ${script}`);
+for(const script of ['build:icon','dist:win','dist:msi','dist:msix','dist:linux','dist:mac'])if(!pkg.scripts?.[script])errors.push(`Missing package script ${script}`);
+if(pkg.build?.win?.icon!=='build/icon.ico')errors.push('Windows build icon must be generated at build/icon.ico');
 const main=fs.existsSync(path.join(root,'electron/main.cjs'))?fs.readFileSync(path.join(root,'electron/main.cjs'),'utf8'):'';
 for(const token of ['contextIsolation:true','nodeIntegration:false','sandbox:true','safeSender','engine_v2.py'])if(!main.replaceAll(' ','').includes(token.replaceAll(' ','')))errors.push(`Electron hardening/engine missing: ${token}`);
 const bridge=fs.readFileSync(path.join(root,'electron/feature-bridge.cjs'),'utf8');
@@ -31,6 +32,7 @@ try{execFileSync(process.platform==='win32'?'python':'python3',['-m','py_compile
 if(errors.length){console.error('RUSH validation failed:\n - '+errors.join('\n - '));process.exit(1)}
 console.log('RUSH Office Suite structural validation passed.');
 console.log(` - ${required.length} required source/build files present`);
+console.log(' - Windows installer icon generation path configured');
 console.log(' - PDF + DOCX/ODT/RTF/TXT/DOC associations configured');
 console.log(' - Electron sandbox/contextIsolation, IPC sender checks and secure bridges present');
 console.log(' - PDF/document/OCR/indexing plus digital signing/translation adapters present');
