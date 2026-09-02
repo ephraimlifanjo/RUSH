@@ -24,7 +24,7 @@
     "dist:msi": "npm run prepare:dist:win && electron-builder --win msi --x64",
     "dist:msix": "npm run prepare:dist:win && electron-builder --win msix --x64",
     "dist:portable": "npm run prepare:dist:win && electron-builder --win portable --x64",
-    "dist:windows:ci": "npm run prepare:dist:win && electron-builder --win nsis msi portable --x64",
+    "dist:windows:ci": "npm run prepare:dist:win && electron-builder --win nsis msi --x64",
     "dist:linux": "npm run check && npm run build:ui && npm run build:python:unix && npm run build:native:unix && npm run integrity && electron-builder --linux AppImage deb --x64",
     "dist:mac": "npm run check && npm run build:ui && npm run build:python:unix && npm run build:native:unix && npm run integrity && electron-builder --mac dmg zip --x64 arm64"
   },
